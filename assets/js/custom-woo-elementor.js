@@ -13,6 +13,9 @@
             $(document).ready(() => {
                 this.bindEvents();
                 this.initializeVariations();
+                this.initAccessibility();
+                this.initTouchEvents();
+                this.optimizeImages();
             });
         }
 
@@ -38,6 +41,9 @@
                 if (defaultVariation) {
                     $dropdown.val(defaultVariation).trigger('change');
                 }
+                
+                // Add loading state
+                $dropdown.closest('.custom-product-container').removeClass('loading');
             });
         }
 
@@ -47,9 +53,33 @@
             const selectedOption = $dropdown.find(':selected');
             
             // Update price
-            const newPrice = selectedOption.data('price');
+            const newPrice = selectedOption.data('price-html') || selectedOption.data('price');
+            const regularPrice = selectedOption.data('regular-price');
+            const salePrice = selectedOption.data('sale-price');
+            
             if (newPrice) {
-                $container.find('.current-price').html(newPrice);
+                if (typeof newPrice === 'string' && newPrice.includes('₹')) {
+                    $container.find('.current-price').html(newPrice);
+                } else {
+                    // Format price if it's just a number
+                    const formattedPrice = this.formatPrice(newPrice);
+                    $container.find('.current-price').html(formattedPrice);
+                }
+            }
+            
+            // Update original price badge if exists
+            if (regularPrice && salePrice && regularPrice !== salePrice) {
+                const $originalBadge = $container.find('.original-price-badge');
+                if ($originalBadge.length) {
+                    $originalBadge.text(this.formatPrice(regularPrice));
+                } else {
+                    // Add original price badge if it doesn't exist
+                    const originalBadgeHtml = `<span class="badge original-price-badge">${this.formatPrice(regularPrice)}</span>`;
+                    $container.find('.product-badges').append(originalBadgeHtml);
+                }
+            } else {
+                // Remove original price badge if no sale
+                $container.find('.original-price-badge').remove();
             }
             
             // Update weight display if needed
@@ -63,7 +93,15 @@
                 id: selectedOption.val(),
                 attributes: selectedOption.data('attributes'),
                 price: newPrice,
+                regular_price: regularPrice,
+                sale_price: salePrice,
                 weight: newWeight
+            });
+            
+            // Trigger custom event for variation change
+            $(document).trigger('custom_woo_variation_changed', {
+                container: $container,
+                variation: $container.data('selected-variation')
             });
         }
 
@@ -102,11 +140,9 @@
                 nonce: customWooElementor.nonce
             };
             
-            $.ajax({
-                url: customWooElementor.ajaxurl,
-                type: 'POST',
-                data: ajaxData,
-                success: (response) => {
+            this.makeAjaxRequest(
+                ajaxData,
+                (response) => {
                     this.setButtonLoading($button, false);
                     
                     if (response.success) {
@@ -126,12 +162,11 @@
                         this.showMessage($container, response.data.message, 'error');
                     }
                 },
-                error: (xhr, status, error) => {
+                (xhr, status, error) => {
                     this.setButtonLoading($button, false);
-                    this.showMessage($container, customWooElementor.error_text, 'error');
-                    console.error('AJAX Error:', error);
+                    this.handleAjaxError(xhr, status, error, $container);
                 }
-            });
+            );
         }
 
         handleBuyNow(e) {
@@ -160,11 +195,9 @@
                 nonce: customWooElementor.nonce
             };
             
-            $.ajax({
-                url: customWooElementor.ajaxurl,
-                type: 'POST',
-                data: ajaxData,
-                success: (response) => {
+            this.makeAjaxRequest(
+                ajaxData,
+                (response) => {
                     this.setButtonLoading($button, false);
                     
                     if (response.success) {
@@ -186,12 +219,11 @@
                         this.showMessage($container, response.data.message, 'error');
                     }
                 },
-                error: (xhr, status, error) => {
+                (xhr, status, error) => {
                     this.setButtonLoading($button, false);
-                    this.showMessage($container, customWooElementor.error_text, 'error');
-                    console.error('AJAX Error:', error);
+                    this.handleAjaxError(xhr, status, error, $container);
                 }
-            });
+            );
         }
 
         getQuantity($container) {
@@ -257,10 +289,21 @@
 
         // Initialize price formatting
         formatPrice(price) {
-            if (typeof woocommerce_price_format !== 'undefined') {
-                return woocommerce_price_format.replace('%s', price);
+            if (typeof price === 'string' && (price.includes('₹') || price.includes('$') || price.includes('£'))) {
+                return price;
             }
-            return price;
+            
+            // Default formatting for Indian Rupees
+            if (typeof customWooElementor !== 'undefined' && customWooElementor.currency_symbol) {
+                return customWooElementor.currency_symbol + parseFloat(price).toFixed(2);
+            }
+            
+            // Fallback formatting
+            if (typeof wc_add_to_cart_params !== 'undefined' && wc_add_to_cart_params.currency_symbol) {
+                return wc_add_to_cart_params.currency_symbol + parseFloat(price).toFixed(2);
+            }
+            
+            return '₹' + parseFloat(price).toFixed(0);
         }
 
         // Accessibility improvements
@@ -309,6 +352,12 @@
                 // Add loading attribute for better performance
                 $img.attr('loading', 'lazy');
                 
+                // Add proper alt text if missing
+                if (!$img.attr('alt')) {
+                    const productTitle = $img.closest('.custom-product-container').find('.product-title').text();
+                    $img.attr('alt', productTitle || 'Product Image');
+                }
+                
                 // Add error handling
                 $img.on('error', function() {
                     $(this).attr('src', 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==');
@@ -338,13 +387,17 @@
 
     // Initialize the widget when Elementor frontend is ready
     $(window).on('elementor/frontend/init', function() {
-        new CustomWooProductWidget();
+        const widget = new CustomWooProductWidget();
+        
+        // Initialize resize handler
+        widget.initResize();
     });
 
     // Fallback initialization for non-Elementor pages
     if (typeof elementorFrontend === 'undefined') {
         $(document).ready(function() {
-            new CustomWooProductWidget();
+            const widget = new CustomWooProductWidget();
+            widget.initResize();
         });
     }
 

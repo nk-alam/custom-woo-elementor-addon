@@ -71,7 +71,21 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
             ]
         );
 
-        // Product Selection
+        // Product Selection Type
+        $this->add_control(
+            'product_selection_type',
+            [
+                'label' => __('Product Selection', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'options' => [
+                    'single' => __('Single Product', 'custom-woo-elementor'),
+                    'multiple' => __('Multiple Products', 'custom-woo-elementor'),
+                ],
+                'default' => 'single',
+            ]
+        );
+
+        // Single Product Selection
         $this->add_control(
             'product_id',
             [
@@ -80,6 +94,93 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'options' => $this->get_products_list(),
                 'default' => '',
                 'label_block' => true,
+                'condition' => [
+                    'product_selection_type' => 'single',
+                ],
+            ]
+        );
+
+        // Multiple Products Settings
+        $this->add_control(
+            'products_per_page',
+            [
+                'label' => __('Products Per Page', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::NUMBER,
+                'default' => 4,
+                'min' => 1,
+                'max' => 20,
+                'condition' => [
+                    'product_selection_type' => 'multiple',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'product_order',
+            [
+                'label' => __('Order By', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'options' => [
+                    'date' => __('Date', 'custom-woo-elementor'),
+                    'title' => __('Title', 'custom-woo-elementor'),
+                    'price' => __('Price', 'custom-woo-elementor'),
+                    'popularity' => __('Popularity', 'custom-woo-elementor'),
+                    'rating' => __('Rating', 'custom-woo-elementor'),
+                    'menu_order' => __('Menu Order', 'custom-woo-elementor'),
+                ],
+                'default' => 'date',
+                'condition' => [
+                    'product_selection_type' => 'multiple',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'product_order_direction',
+            [
+                'label' => __('Order Direction', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'options' => [
+                    'DESC' => __('Descending', 'custom-woo-elementor'),
+                    'ASC' => __('Ascending', 'custom-woo-elementor'),
+                ],
+                'default' => 'DESC',
+                'condition' => [
+                    'product_selection_type' => 'multiple',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'product_categories',
+            [
+                'label' => __('Product Categories', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SELECT2,
+                'options' => $this->get_product_categories(),
+                'multiple' => true,
+                'label_block' => true,
+                'condition' => [
+                    'product_selection_type' => 'multiple',
+                ],
+            ]
+        );
+
+        // Layout Settings
+        $this->add_control(
+            'columns',
+            [
+                'label' => __('Columns', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'options' => [
+                    '1' => __('1 Column', 'custom-woo-elementor'),
+                    '2' => __('2 Columns', 'custom-woo-elementor'),
+                    '3' => __('3 Columns', 'custom-woo-elementor'),
+                    '4' => __('4 Columns', 'custom-woo-elementor'),
+                ],
+                'default' => '4',
+                'condition' => [
+                    'product_selection_type' => 'multiple',
+                ],
             ]
         );
 
@@ -157,6 +258,19 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'label_on' => __('Show', 'custom-woo-elementor'),
                 'label_off' => __('Hide', 'custom-woo-elementor'),
                 'return_value' => 'yes',
+                'default' => 'no',
+            ]
+        );
+
+        // Show original price as badge
+        $this->add_control(
+            'show_original_price_badge',
+            [
+                'label' => __('Show Original Price as Badge', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SWITCHER,
+                'label_on' => __('Show', 'custom-woo-elementor'),
+                'label_off' => __('Hide', 'custom-woo-elementor'),
+                'return_value' => 'yes',
                 'default' => 'yes',
             ]
         );
@@ -191,6 +305,20 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'name' => 'container_shadow',
                 'label' => __('Container Shadow', 'custom-woo-elementor'),
                 'selector' => '{{WRAPPER}} .custom-product-container',
+                'fields_options' => [
+                    'box_shadow_type' => [
+                        'default' => 'yes',
+                    ],
+                    'box_shadow' => [
+                        'default' => [
+                            'horizontal' => 0,
+                            'vertical' => 4,
+                            'blur' => 20,
+                            'spread' => 0,
+                            'color' => 'rgba(0,0,0,0.1)',
+                        ],
+                    ],
+                ],
             ]
         );
 
@@ -200,6 +328,13 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'label' => __('Border Radius', 'custom-woo-elementor'),
                 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'size_units' => ['px', '%'],
+                'default' => [
+                    'top' => 12,
+                    'right' => 12,
+                    'bottom' => 12,
+                    'left' => 12,
+                    'unit' => 'px',
+                ],
                 'selectors' => [
                     '{{WRAPPER}} .custom-product-container' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
@@ -212,8 +347,52 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'label' => __('Container Padding', 'custom-woo-elementor'),
                 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'size_units' => ['px', 'em', '%'],
+                'default' => [
+                    'top' => 20,
+                    'right' => 20,
+                    'bottom' => 20,
+                    'left' => 20,
+                    'unit' => 'px',
+                ],
                 'selectors' => [
                     '{{WRAPPER}} .custom-product-container' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'container_margin',
+            [
+                'label' => __('Container Margin', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .custom-product-container' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'products_gap',
+            [
+                'label' => __('Products Gap', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => ['px'],
+                'range' => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 50,
+                    ],
+                ],
+                'default' => [
+                    'unit' => 'px',
+                    'size' => 20,
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .products-grid' => 'gap: {{SIZE}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'product_selection_type' => 'multiple',
                 ],
             ]
         );
@@ -255,15 +434,49 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
             ]
         );
 
+        $this->add_responsive_control(
+            'image_height',
+            [
+                'label' => __('Image Height', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => ['px'],
+                'range' => [
+                    'px' => [
+                        'min' => 100,
+                        'max' => 600,
+                    ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .product-image img' => 'height: {{SIZE}}{{UNIT}}; object-fit: cover;',
+                ],
+            ]
+        );
+
         $this->add_control(
             'image_border_radius',
             [
                 'label' => __('Image Border Radius', 'custom-woo-elementor'),
                 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'size_units' => ['px', '%'],
+                'default' => [
+                    'top' => 8,
+                    'right' => 8,
+                    'bottom' => 8,
+                    'left' => 8,
+                    'unit' => 'px',
+                ],
                 'selectors' => [
                     '{{WRAPPER}} .product-image img' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name' => 'image_border',
+                'label' => __('Image Border', 'custom-woo-elementor'),
+                'selector' => '{{WRAPPER}} .product-image img',
             ]
         );
 
@@ -287,6 +500,12 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'name' => 'title_typography',
                 'label' => __('Typography', 'custom-woo-elementor'),
                 'selector' => '{{WRAPPER}} .product-title',
+                'fields_options' => [
+                    'typography' => ['default' => 'yes'],
+                    'font_size' => ['default' => ['size' => 18, 'unit' => 'px']],
+                    'font_weight' => ['default' => '600'],
+                    'line_height' => ['default' => ['size' => 1.4, 'unit' => 'em']],
+                ],
             ]
         );
 
@@ -302,14 +521,59 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
             ]
         );
 
+        $this->add_control(
+            'title_hover_color',
+            [
+                'label' => __('Title Hover Color', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '#007cba',
+                'selectors' => [
+                    '{{WRAPPER}} .custom-product-container:hover .product-title' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+
         $this->add_responsive_control(
             'title_margin',
             [
                 'label' => __('Margin', 'custom-woo-elementor'),
                 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'size_units' => ['px', 'em', '%'],
+                'default' => [
+                    'top' => 0,
+                    'right' => 0,
+                    'bottom' => 10,
+                    'left' => 0,
+                    'unit' => 'px',
+                ],
                 'selectors' => [
                     '{{WRAPPER}} .product-title' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'title_alignment',
+            [
+                'label' => __('Alignment', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::CHOOSE,
+                'options' => [
+                    'left' => [
+                        'title' => __('Left', 'custom-woo-elementor'),
+                        'icon' => 'eicon-text-align-left',
+                    ],
+                    'center' => [
+                        'title' => __('Center', 'custom-woo-elementor'),
+                        'icon' => 'eicon-text-align-center',
+                    ],
+                    'right' => [
+                        'title' => __('Right', 'custom-woo-elementor'),
+                        'icon' => 'eicon-text-align-right',
+                    ],
+                ],
+                'default' => 'center',
+                'selectors' => [
+                    '{{WRAPPER}} .product-title' => 'text-align: {{VALUE}};',
                 ],
             ]
         );
@@ -335,7 +599,41 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'type' => \Elementor\Controls_Manager::COLOR,
                 'default' => '#ffb400',
                 'selectors' => [
+                    '{{WRAPPER}} .product-rating .star.filled' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'star_empty_color',
+            [
+                'label' => __('Empty Star Color', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '#ddd',
+                'selectors' => [
                     '{{WRAPPER}} .product-rating .star' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'star_size',
+            [
+                'label' => __('Star Size', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => ['px'],
+                'range' => [
+                    'px' => [
+                        'min' => 10,
+                        'max' => 30,
+                    ],
+                ],
+                'default' => [
+                    'unit' => 'px',
+                    'size' => 16,
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .product-rating .star' => 'font-size: {{SIZE}}{{UNIT}};',
                 ],
             ]
         );
@@ -346,6 +644,42 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'name' => 'rating_text_typography',
                 'label' => __('Rating Text Typography', 'custom-woo-elementor'),
                 'selector' => '{{WRAPPER}} .product-rating .rating-text',
+                'fields_options' => [
+                    'typography' => ['default' => 'yes'],
+                    'font_size' => ['default' => ['size' => 14, 'unit' => 'px']],
+                    'font_weight' => ['default' => '500'],
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'rating_text_color',
+            [
+                'label' => __('Rating Text Color', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '#666',
+                'selectors' => [
+                    '{{WRAPPER}} .product-rating .rating-text' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'rating_margin',
+            [
+                'label' => __('Rating Margin', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'default' => [
+                    'top' => 0,
+                    'right' => 0,
+                    'bottom' => 12,
+                    'left' => 0,
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .product-rating' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
             ]
         );
 
@@ -369,10 +703,17 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'name' => 'badge_typography',
                 'label' => __('Badge Typography', 'custom-woo-elementor'),
                 'selector' => '{{WRAPPER}} .product-badges .badge',
+                'fields_options' => [
+                    'typography' => ['default' => 'yes'],
+                    'font_size' => ['default' => ['size' => 12, 'unit' => 'px']],
+                    'font_weight' => ['default' => '500'],
+                    'text_transform' => ['default' => 'uppercase'],
+                    'letter_spacing' => ['default' => ['size' => 0.5, 'unit' => 'px']],
+                ],
             ]
         );
 
-        $this->add_control(
+        $this->add_responsive_control(
             'badge_spacing',
             [
                 'label' => __('Badge Spacing', 'custom-woo-elementor'),
@@ -386,10 +727,156 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 ],
                 'default' => [
                     'unit' => 'px',
-                    'size' => 5,
+                    'size' => 6,
                 ],
                 'selectors' => [
-                    '{{WRAPPER}} .product-badges .badge' => 'margin-right: {{SIZE}}{{UNIT}};',
+                    '{{WRAPPER}} .product-badges' => 'gap: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'badge_padding',
+            [
+                'label' => __('Badge Padding', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em'],
+                'default' => [
+                    'top' => 4,
+                    'right' => 12,
+                    'bottom' => 4,
+                    'left' => 12,
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .product-badges .badge' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'badge_border_radius',
+            [
+                'label' => __('Badge Border Radius', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => ['px'],
+                'range' => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 50,
+                    ],
+                ],
+                'default' => [
+                    'unit' => 'px',
+                    'size' => 20,
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .product-badges .badge' => 'border-radius: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'badges_margin',
+            [
+                'label' => __('Badges Margin', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'default' => [
+                    'top' => 0,
+                    'right' => 0,
+                    'bottom' => 15,
+                    'left' => 0,
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .product-badges' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->end_controls_section();
+
+        // Style Section - Price
+        $this->start_controls_section(
+            'price_style_section',
+            [
+                'label' => __('Product Price', 'custom-woo-elementor'),
+                'tab' => \Elementor\Controls_Manager::TAB_STYLE,
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Typography::get_type(),
+            [
+                'name' => 'price_typography',
+                'label' => __('Price Typography', 'custom-woo-elementor'),
+                'selector' => '{{WRAPPER}} .product-price .current-price',
+                'fields_options' => [
+                    'typography' => ['default' => 'yes'],
+                    'font_size' => ['default' => ['size' => 20, 'unit' => 'px']],
+                    'font_weight' => ['default' => '700'],
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'price_color',
+            [
+                'label' => __('Price Color', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '#007cba',
+                'selectors' => [
+                    '{{WRAPPER}} .product-price .current-price' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'original_price_badge_background',
+            [
+                'label' => __('Original Price Badge Background', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '#ff6b35',
+                'selectors' => [
+                    '{{WRAPPER}} .original-price-badge' => 'background-color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'show_original_price_badge' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'original_price_badge_color',
+            [
+                'label' => __('Original Price Badge Text Color', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '#ffffff',
+                'selectors' => [
+                    '{{WRAPPER}} .original-price-badge' => 'color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'show_original_price_badge' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'price_margin',
+            [
+                'label' => __('Price Margin', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'default' => [
+                    'top' => 0,
+                    'right' => 0,
+                    'bottom' => 20,
+                    'left' => 0,
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .product-price' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
             ]
         );
@@ -421,6 +908,12 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'name' => 'add_to_cart_typography',
                 'label' => __('Typography', 'custom-woo-elementor'),
                 'selector' => '{{WRAPPER}} .add-to-cart-btn',
+                'fields_options' => [
+                    'typography' => ['default' => 'yes'],
+                    'font_size' => ['default' => ['size' => 14, 'unit' => 'px']],
+                    'font_weight' => ['default' => '600'],
+                    'text_transform' => ['default' => 'uppercase'],
+                ],
             ]
         );
 
@@ -445,14 +938,16 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
             ]
         );
 
-        $this->add_control(
-            'add_to_cart_background',
+        $this->add_group_control(
+            \Elementor\Group_Control_Background::get_type(),
             [
-                'label' => __('Background Color', 'custom-woo-elementor'),
-                'type' => \Elementor\Controls_Manager::COLOR,
-                'default' => '#007cba',
-                'selectors' => [
-                    '{{WRAPPER}} .add-to-cart-btn' => 'background-color: {{VALUE}};',
+                'name' => 'add_to_cart_background',
+                'label' => __('Background', 'custom-woo-elementor'),
+                'types' => ['classic', 'gradient'],
+                'selector' => '{{WRAPPER}} .add-to-cart-btn',
+                'fields_options' => [
+                    'background' => ['default' => 'classic'],
+                    'color' => ['default' => '#007cba'],
                 ],
             ]
         );
@@ -477,14 +972,13 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
             ]
         );
 
-        $this->add_control(
-            'add_to_cart_hover_background',
+        $this->add_group_control(
+            \Elementor\Group_Control_Background::get_type(),
             [
-                'label' => __('Background Color', 'custom-woo-elementor'),
-                'type' => \Elementor\Controls_Manager::COLOR,
-                'selectors' => [
-                    '{{WRAPPER}} .add-to-cart-btn:hover' => 'background-color: {{VALUE}};',
-                ],
+                'name' => 'add_to_cart_hover_background',
+                'label' => __('Background', 'custom-woo-elementor'),
+                'types' => ['classic', 'gradient'],
+                'selector' => '{{WRAPPER}} .add-to-cart-btn:hover',
             ]
         );
 
@@ -543,17 +1037,19 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
             ]
         );
 
-        $this->add_control(
-            'buy_now_background',
+        $this->add_group_control(
+            \Elementor\Group_Control_Background::get_type(),
             [
-                'label' => __('Background Color', 'custom-woo-elementor'),
-                'type' => \Elementor\Controls_Manager::COLOR,
-                'default' => '#ff6b35',
-                'selectors' => [
-                    '{{WRAPPER}} .buy-now-btn' => 'background-color: {{VALUE}};',
-                ],
+                'name' => 'buy_now_background',
+                'label' => __('Background', 'custom-woo-elementor'),
+                'types' => ['classic', 'gradient'],
+                'selector' => '{{WRAPPER}} .buy-now-btn',
                 'condition' => [
                     'show_buy_now' => 'yes',
+                ],
+                'fields_options' => [
+                    'background' => ['default' => 'classic'],
+                    'color' => ['default' => '#ff6b35'],
                 ],
             ]
         );
@@ -584,14 +1080,13 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
             ]
         );
 
-        $this->add_control(
-            'buy_now_hover_background',
+        $this->add_group_control(
+            \Elementor\Group_Control_Background::get_type(),
             [
-                'label' => __('Background Color', 'custom-woo-elementor'),
-                'type' => \Elementor\Controls_Manager::COLOR,
-                'selectors' => [
-                    '{{WRAPPER}} .buy-now-btn:hover' => 'background-color: {{VALUE}};',
-                ],
+                'name' => 'buy_now_hover_background',
+                'label' => __('Background', 'custom-woo-elementor'),
+                'types' => ['classic', 'gradient'],
+                'selector' => '{{WRAPPER}} .buy-now-btn:hover',
                 'condition' => [
                     'show_buy_now' => 'yes',
                 ],
@@ -608,6 +1103,13 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'label' => __('Button Padding', 'custom-woo-elementor'),
                 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'size_units' => ['px', 'em', '%'],
+                'default' => [
+                    'top' => 12,
+                    'right' => 24,
+                    'bottom' => 12,
+                    'left' => 24,
+                    'unit' => 'px',
+                ],
                 'selectors' => [
                     '{{WRAPPER}} .product-buttons button' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
@@ -621,6 +1123,13 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'label' => __('Button Border Radius', 'custom-woo-elementor'),
                 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'size_units' => ['px', '%'],
+                'default' => [
+                    'top' => 8,
+                    'right' => 8,
+                    'bottom' => 8,
+                    'left' => 8,
+                    'unit' => 'px',
+                ],
                 'selectors' => [
                     '{{WRAPPER}} .product-buttons button' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
@@ -644,7 +1153,54 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                     'size' => 10,
                 ],
                 'selectors' => [
-                    '{{WRAPPER}} .product-buttons button:not(:last-child)' => 'margin-right: {{SIZE}}{{UNIT}};',
+                    '{{WRAPPER}} .product-buttons' => 'gap: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'button_width',
+            [
+                'label' => __('Button Width', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SELECT,
+                'options' => [
+                    'auto' => __('Auto', 'custom-woo-elementor'),
+                    '100%' => __('Full Width', 'custom-woo-elementor'),
+                    'custom' => __('Custom', 'custom-woo-elementor'),
+                ],
+                'default' => 'auto',
+                'selectors_dictionary' => [
+                    'auto' => 'auto',
+                    '100%' => '100%',
+                    'custom' => 'var(--button-width)',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .product-buttons button' => 'width: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'button_custom_width',
+            [
+                'label' => __('Custom Width', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => ['px', '%'],
+                'range' => [
+                    'px' => [
+                        'min' => 100,
+                        'max' => 500,
+                    ],
+                    '%' => [
+                        'min' => 10,
+                        'max' => 100,
+                    ],
+                ],
+                'condition' => [
+                    'button_width' => 'custom',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}}' => '--button-width: {{SIZE}}{{UNIT}};',
                 ],
             ]
         );
@@ -669,6 +1225,22 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                 'name' => 'variation_typography',
                 'label' => __('Typography', 'custom-woo-elementor'),
                 'selector' => '{{WRAPPER}} .variation-selector select',
+                'fields_options' => [
+                    'typography' => ['default' => 'yes'],
+                    'font_size' => ['default' => ['size' => 14, 'unit' => 'px']],
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'variation_text_color',
+            [
+                'label' => __('Text Color', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '#333',
+                'selectors' => [
+                    '{{WRAPPER}} .variation-selector select' => 'color: {{VALUE}};',
+                ],
             ]
         );
 
@@ -684,14 +1256,73 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
             ]
         );
 
-        $this->add_control(
-            'variation_border_color',
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
             [
-                'label' => __('Border Color', 'custom-woo-elementor'),
-                'type' => \Elementor\Controls_Manager::COLOR,
-                'default' => '#ddd',
+                'name' => 'variation_border',
+                'label' => __('Border', 'custom-woo-elementor'),
+                'selector' => '{{WRAPPER}} .variation-selector select',
+                'fields_options' => [
+                    'border' => ['default' => 'solid'],
+                    'width' => ['default' => ['top' => 2, 'right' => 2, 'bottom' => 2, 'left' => 2, 'unit' => 'px']],
+                    'color' => ['default' => '#e1e5e9'],
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'variation_border_radius',
+            [
+                'label' => __('Border Radius', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'],
+                'default' => [
+                    'top' => 8,
+                    'right' => 8,
+                    'bottom' => 8,
+                    'left' => 8,
+                    'unit' => 'px',
+                ],
                 'selectors' => [
-                    '{{WRAPPER}} .variation-selector select' => 'border-color: {{VALUE}};',
+                    '{{WRAPPER}} .variation-selector select' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'variation_padding',
+            [
+                'label' => __('Padding', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em'],
+                'default' => [
+                    'top' => 12,
+                    'right' => 16,
+                    'bottom' => 12,
+                    'left' => 16,
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .variation-selector select' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'variation_margin',
+            [
+                'label' => __('Margin', 'custom-woo-elementor'),
+                'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'default' => [
+                    'top' => 0,
+                    'right' => 0,
+                    'bottom' => 15,
+                    'left' => 0,
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .variation-selector' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
             ]
         );
@@ -722,27 +1353,78 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
     }
 
     /**
-     * Render widget output on the frontend
+     * Get product categories for dropdown
      */
-    protected function render() {
-        $settings = $this->get_settings_for_display();
-        $product_id = $settings['product_id'];
+    private function get_product_categories() {
+        $categories = [];
+        $terms = get_terms([
+            'taxonomy' => 'product_cat',
+            'hide_empty' => false,
+        ]);
 
-        if (empty($product_id)) {
-            echo '<div class="custom-product-notice">' . __('Please select a product from the widget settings.', 'custom-woo-elementor') . '</div>';
-            return;
+        if (!is_wp_error($terms)) {
+            foreach ($terms as $term) {
+                $categories[$term->term_id] = $term->name;
+            }
         }
 
+        return $categories;
+    }
+
+    /**
+     * Get products based on settings
+     */
+    private function get_products_query($settings) {
+        $args = [
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => $settings['products_per_page'] ?? 4,
+            'orderby' => $settings['product_order'] ?? 'date',
+            'order' => $settings['product_order_direction'] ?? 'DESC',
+        ];
+
+        // Handle different order types
+        switch ($settings['product_order']) {
+            case 'popularity':
+                $args['meta_key'] = 'total_sales';
+                $args['orderby'] = 'meta_value_num';
+                break;
+            case 'rating':
+                $args['meta_key'] = '_wc_average_rating';
+                $args['orderby'] = 'meta_value_num';
+                break;
+            case 'price':
+                $args['meta_key'] = '_price';
+                $args['orderby'] = 'meta_value_num';
+                break;
+        }
+
+        // Filter by categories
+        if (!empty($settings['product_categories'])) {
+            $args['tax_query'] = [
+                [
+                    'taxonomy' => 'product_cat',
+                    'field' => 'term_id',
+                    'terms' => $settings['product_categories'],
+                ],
+            ];
+        }
+
+        return new WP_Query($args);
+    }
+
+    /**
+     * Render single product
+     */
+    private function render_single_product($product_id, $settings) {
         $product = wc_get_product($product_id);
         if (!$product) {
-            echo '<div class="custom-product-notice">' . __('Product not found.', 'custom-woo-elementor') . '</div>';
             return;
         }
 
         // Get product data
         $product_image = wp_get_attachment_image_src(get_post_thumbnail_id($product_id), 'full');
         $product_title = $product->get_name();
-        $product_price = $product->get_price_html();
         $product_rating = $product->get_average_rating();
         $product_rating_count = $product->get_rating_count();
         $custom_weight = get_post_meta($product_id, '_custom_weight_display', true);
@@ -752,6 +1434,9 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
         // Get variations if variable product
         $variations = [];
         $default_variation = null;
+        $current_price = $product->get_price_html();
+        $original_price = '';
+
         if ($product->is_type('variable')) {
             $available_variations = $product->get_available_variations();
             foreach ($available_variations as $variation) {
@@ -763,17 +1448,26 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                     $attributes[] = $term ? $term->name : $attr_value;
                 }
                 
+                $weight_display = $custom_weight ?: ($variation_obj->get_weight() ? $variation_obj->get_weight() . 'g' : '');
+                
                 $variations[] = [
                     'id' => $variation['variation_id'],
                     'name' => implode(' - ', $attributes),
-                    'price' => $variation_obj->get_price_html(),
-                    'weight' => $variation_obj->get_weight() ? $variation_obj->get_weight() . 'g' : $custom_weight,
+                    'price' => $variation_obj->get_price(),
+                    'regular_price' => $variation_obj->get_regular_price(),
+                    'sale_price' => $variation_obj->get_sale_price(),
+                    'price_html' => $variation_obj->get_price_html(),
+                    'weight' => $weight_display,
                     'attributes' => $variation['attributes']
                 ];
             }
             
             if ($settings['auto_select_first_variation'] === 'yes' && !empty($variations)) {
                 $default_variation = $variations[0];
+                $current_price = wc_price($default_variation['price']);
+                if ($default_variation['regular_price'] && $default_variation['sale_price']) {
+                    $original_price = wc_price($default_variation['regular_price']);
+                }
             }
         }
 
@@ -783,7 +1477,9 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
             <!-- Product Image -->
             <div class="product-image">
                 <?php if ($product_image): ?>
-                    <img src="<?php echo esc_url($product_image[0]); ?>" alt="<?php echo esc_attr($product_title); ?>">
+                    <img src="<?php echo esc_url($product_image[0]); ?>" alt="<?php echo esc_attr($product_title); ?>" loading="lazy">
+                <?php else: ?>
+                    <img src="<?php echo wc_placeholder_img_src(); ?>" alt="<?php echo esc_attr($product_title); ?>" loading="lazy">
                 <?php endif; ?>
             </div>
 
@@ -816,6 +1512,11 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                         ?>
                             <span class="badge badge-<?php echo esc_attr($badge_style); ?>"><?php echo esc_html($badge); ?></span>
                         <?php endforeach; ?>
+                        
+                        <!-- Original Price Badge -->
+                        <?php if ($settings['show_original_price_badge'] === 'yes' && $original_price): ?>
+                            <span class="badge original-price-badge"><?php echo $original_price; ?></span>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
 
@@ -826,10 +1527,13 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                             <?php foreach ($variations as $variation): ?>
                                 <option value="<?php echo esc_attr($variation['id']); ?>" 
                                         data-price="<?php echo esc_attr($variation['price']); ?>"
+                                        data-price-html="<?php echo esc_attr($variation['price_html']); ?>"
+                                        data-regular-price="<?php echo esc_attr($variation['regular_price']); ?>"
+                                        data-sale-price="<?php echo esc_attr($variation['sale_price']); ?>"
                                         data-weight="<?php echo esc_attr($variation['weight']); ?>"
                                         data-attributes="<?php echo esc_attr(json_encode($variation['attributes'])); ?>"
                                         <?php echo ($default_variation && $default_variation['id'] == $variation['id']) ? 'selected' : ''; ?>>
-                                    <?php echo esc_html($variation['weight'] . ' - ' . strip_tags($variation['price'])); ?>
+                                    <?php echo esc_html($variation['weight'] . ' - ' . wc_price($variation['price'])); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -838,7 +1542,7 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
 
                 <!-- Product Price -->
                 <div class="product-price">
-                    <span class="current-price"><?php echo $default_variation ? $default_variation['price'] : $product_price; ?></span>
+                    <span class="current-price"><?php echo $current_price; ?></span>
                 </div>
 
                 <!-- Product Buttons -->
@@ -854,11 +1558,6 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                     <?php endif; ?>
                 </div>
 
-                <!-- Loading indicator -->
-                <div class="loading-indicator" style="display: none;">
-                    <span><?php _e('Loading...', 'custom-woo-elementor'); ?></span>
-                </div>
-
                 <!-- Messages -->
                 <div class="product-messages"></div>
             </div>
@@ -867,12 +1566,45 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
     }
 
     /**
+     * Render widget output on the frontend
+     */
+    protected function render() {
+        $settings = $this->get_settings_for_display();
+
+        if ($settings['product_selection_type'] === 'single') {
+            $product_id = $settings['product_id'];
+            if (empty($product_id)) {
+                echo '<div class="custom-product-notice">' . __('Please select a product from the widget settings.', 'custom-woo-elementor') . '</div>';
+                return;
+            }
+            $this->render_single_product($product_id, $settings);
+        } else {
+            // Multiple products
+            $query = $this->get_products_query($settings);
+            $columns = $settings['columns'] ?? 4;
+            
+            if ($query->have_posts()) {
+                echo '<div class="products-grid products-columns-' . esc_attr($columns) . '">';
+                while ($query->have_posts()) {
+                    $query->the_post();
+                    $this->render_single_product(get_the_ID(), $settings);
+                }
+                echo '</div>';
+                wp_reset_postdata();
+            } else {
+                echo '<div class="custom-product-notice">' . __('No products found.', 'custom-woo-elementor') . '</div>';
+            }
+        }
+    }
+
+    /**
      * Render widget output in the editor
      */
     protected function content_template() {
         ?>
         <#
-        if (settings.product_id) {
+        if (settings.product_selection_type === 'single') {
+            if (settings.product_id) {
         #>
         <div class="custom-product-container">
             <div class="product-image">
@@ -901,20 +1633,23 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
                         <span class="badge badge-yellow">Medium Spicy</span>
                         <span class="badge badge-green">Jain Friendly</span>
                         <span class="badge badge-orange">Mustard Oil</span>
+                        <# if (settings.show_original_price_badge === 'yes') { #>
+                            <span class="badge original-price-badge">Rs 400</span>
+                        <# } #>
                     </div>
                 <# } #>
                 
                 <# if (settings.show_variation_selector === 'yes') { #>
                     <div class="variation-selector">
                         <select class="variation-dropdown">
-                            <option>325g - Rs 299 (Rs 400)</option>
-                            <option>500g - Rs 399 (Rs 500)</option>
+                            <option>325g - Rs 299</option>
+                            <option>500g - Rs 399</option>
                         </select>
                     </div>
                 <# } #>
                 
                 <div class="product-price">
-                    <span class="current-price">Rs 299 <del>Rs 400</del></span>
+                    <span class="current-price">Rs 299</span>
                 </div>
                 
                 <div class="product-buttons">
@@ -926,9 +1661,60 @@ class Custom_Woo_Product_Widget extends \Elementor\Widget_Base {
             </div>
         </div>
         <#
-        } else {
+            } else {
         #>
         <div class="custom-product-notice">Please select a product from the widget settings.</div>
+        <#
+            }
+        } else {
+            // Multiple products preview
+            var columns = settings.columns || 4;
+        #>
+        <div class="products-grid products-columns-{{{columns}}}">
+            <# for (var i = 0; i < (settings.products_per_page || 4); i++) { #>
+            <div class="custom-product-container">
+                <div class="product-image">
+                    <img src="https://via.placeholder.com/300x300?text=Product+{{{i+1}}}" alt="Product Image">
+                </div>
+                <div class="product-content">
+                    <# if (settings.show_title === 'yes') { #>
+                        <h3 class="product-title">Sample Product {{{i+1}}}</h3>
+                    <# } #>
+                    
+                    <# if (settings.show_rating === 'yes') { #>
+                        <div class="product-rating">
+                            <div class="stars">
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star">★</span>
+                            </div>
+                            <span class="rating-text">4.0 | 150 Reviews</span>
+                        </div>
+                    <# } #>
+                    
+                    <# if (settings.show_badges === 'yes') { #>
+                        <div class="product-badges">
+                            <span class="badge badge-yellow">Medium Spicy</span>
+                            <span class="badge badge-green">Jain Friendly</span>
+                        </div>
+                    <# } #>
+                    
+                    <div class="product-price">
+                        <span class="current-price">Rs 299</span>
+                    </div>
+                    
+                    <div class="product-buttons">
+                        <button class="add-to-cart-btn">ADD TO CART</button>
+                        <# if (settings.show_buy_now === 'yes') { #>
+                            <button class="buy-now-btn">BUY NOW</button>
+                        <# } #>
+                    </div>
+                </div>
+            </div>
+            <# } #>
+        </div>
         <#
         }
         #>
